@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  web:
+    build: .
+    image: backend
+    entrypoint: ./start.sh
+    command: python3 backend/manage.py runserver 0.0.0.0:5000
+    ports:
+      - "5000:5000"
+    env_file: .env
+    depends_on:
+      - db
+    volumes:
+      - .:/backend
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: example
