@@ -7,6 +7,7 @@ urlpatterns = [
     path("hello_world", views.hello_world),
     path("json", views.get_json),
     path("create", views.create),
-    path("notes/<int:id>", views.notes) 
+    path("notes/<int:id>", views.notes) ,
+    path("drf_notes/", views.NoteViewSet.as_view({'get': 'list'}))
 
 ]

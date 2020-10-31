@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 import json
 from .models import Note
+from rest_framework import serializers, viewsets
 
 
 
@@ -37,3 +38,13 @@ def notes(request, id):
 		"body": note.body
 	}))
 
+
+class NoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Note
+        fields = ['title', 'body', 'id']
+
+# ViewSets define the view behavior.
+class NoteViewSet(viewsets.ModelViewSet):
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
