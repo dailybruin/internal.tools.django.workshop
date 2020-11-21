@@ -1,8 +1,12 @@
 from django.http import HttpResponse, JsonResponse
 import json
 from .models import Note
+from .serializers import NoteSerializer
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404 
+
 
 
 
@@ -17,25 +21,90 @@ def get_json(request):
 		"body": body
 	}))
 
-
+#
+# GET (read), POST (writing)
+#
+#  CRUD operations
+#   c = create
+#   r = read
+#   u = update
+#   d = delete
+#
+@api_view(["POST"])
 def create(request):
 	"""
 	request.GET["title"]  => title of new note
 	request.GET["body"]   => body of the new note
 	"""
-	note = Note.objects.create(
-		title=request.GET["title"],
-		body=request.GET["body"]
+	serializer = NoteSerializer(data=request.data)
+	if serializer.is_valid():
+		note = serializer.save()
+		return JsonResponse({
+			'id': note.id
+		})
+	else:
+		return JsonResponse(serializer.errors)
+	# note = Note.objects.create(
+	# 	title=request.data["title"],
+	# 	body=request.data["body"]
+	# )
+
+	# return JsonResponse({
+	# 	'id': note.id
+	# })
+
+@api_view(['GET'])
+def read(request, id):
+	note = get_object_or_404(
+		Note,
+		id=id
+	)
+	# note = Note.objects.get(id=id)
+	serializer = NoteSerializer(note)
+	return JsonResponse(serializer.data)
+	# return JsonResponse({
+	# 	"title": note.title,
+	# 	"body": note.body
+	# })
+
+# GET, POST, PUT (updates)
+@api_view(['PUT'])
+def update(request, id):
+	note = get_object_or_404(
+		Note,
+		id=id
+	)
+	serializer = NoteSerializer(note, data=request.data)
+	if serializer.is_valid():
+		serializer.save()
+		return JsonResponse({
+			'id': note.id
+		})
+	else:
+		return JsonResponse(serializer.errors)
+
+# DELETE => DELETE
+@api_view(['DELETE'])
+def delete(request, id):
+	note = get_object_or_404(
+		Note,
+		id=id
 	)
 
-	return HttpResponse("Success")
+	note.delete()
 
-def notes(request, id):
-	note = Note.objects.get(id=id)
-	return HttpResponse(json.dumps({
-		"title": note.title,
-		"body": note.body
-	}))
+	return JsonResponse({
+		'id': id
+	})
+
+
+@api_view(['GET'])
+def list(request):
+	notes = Note.objects.all()
+
+	serializer = NoteSerializer(notes, many=True)
+
+	return JsonResponse(serializer.data, safe=False)
 
 
 # class NoteSerializer(serializers.ModelSerializer):
@@ -44,9 +113,14 @@ def notes(request, id):
 #         fields = ['title', 'body', 'id']
 
 # # ViewSets define the view behavior.
-# class NoteViewSet(viewsets.ModelViewSet):
-#     queryset = Note.objects.all()
-#     serializer_class = NoteSerializer
+# list() => get 
+# create() => post
+# read()  => GET /1
+# destroy() => DELETE /1
+# update() => PUT /1
+class NoteViewSet(viewsets.ModelViewSet):
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
 
 # @api_view(["GET"])
 # def episode_latest(request, series_title):
